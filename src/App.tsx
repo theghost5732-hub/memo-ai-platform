@@ -1,28 +1,27 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import DashboardLayout from "./layouts/DashboardLayout";
-import DashboardHome from "./pages/dashboard/DashboardHome";
+import Chat from "./pages/dashboard/Chat";
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => {
+  return (
     <BrowserRouter>
       <Routes>
+        {/* الصفحة الرئيسية */}
         <Route path="/" element={<Index />} />
+        
+        {/* صفحة تسجيل الدخول */}
         <Route path="/auth" element={<Auth />} />
         
-        {/* نظام الداشبورد */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<DashboardHome />} />
-          {/* هنا هنضيف باقي الصفحات بعدين */}
-        </Route>
-
+        {/* صفحة الشات */}
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/dashboard/chat" element={<Chat />} />
+        
+        {/* أي صفحة مش موجودة */}
+        <Route path="*" element={<Index />} />
       </Routes>
     </BrowserRouter>
-  </QueryClientProvider>
-);
+  );
+};
 
 export default App;

@@ -9,14 +9,12 @@
     <!-- استدعاء خط Cairo -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: white; }
-        .msg-bubble { max-width: 80%; padding: 12px 16px; border-radius: 16px; margin-bottom: 10px; line-height: 1.6; }
+        body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: white; margin: 0; }
+        /* ستايل الشات */
+        .msg-bubble { max-width: 80%; padding: 12px 16px; border-radius: 16px; margin-bottom: 10px; line-height: 1.6; animation: fadeIn 0.3s ease; }
         .user-msg { background-color: #7c3aed; color: white; align-self: flex-start; border-top-right-radius: 0; }
         .ai-msg { background-color: #1e293b; color: #e2e8f0; align-self: flex-end; border-top-left-radius: 0; border: 1px solid #334155; }
-        /* إخفاء شريط التمرير */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="h-screen flex flex-col items-center justify-center p-4">
@@ -37,7 +35,6 @@
 
         <!-- منطقة الرسائل -->
         <div id="chat-box" class="flex-1 overflow-y-auto p-4 flex flex-col space-y-2">
-            <!-- رسالة ترحيب -->
             <div class="msg-bubble ai-msg">
                 أهلاً يا بطل! 👋 أنا ميمو.. جاهز نذاكر إيه النهاردة؟
             </div>
@@ -56,15 +53,14 @@
         </div>
     </div>
 
-    <!-- السحر (Javascript) -->
+    <!-- كود الجافاسكريبت -->
     <script>
-        // ⚠️ استبدل الكلمة دي بمفتاحك الحقيقي عشان يشتغل
-        // لو سبتها فاضية هتشتغل ديمو
-        const API_KEY = AIzaSyBpvU_qU7ocojaPCh3hPY4mLmgnHNezTOs
+        // ⚠️⚠️⚠️ حط مفتاحك هنا بين علامتين التنصيص
+        const API_KEY = "حط_مفتاح_جوجل_هنا"; 
+
         const form = document.getElementById('chat-form');
         const input = document.getElementById('user-input');
         const chatBox = document.getElementById('chat-box');
-        const sendBtn = document.getElementById('send-btn');
 
         function addMessage(text, isUser) {
             const div = document.createElement('div');
@@ -79,21 +75,19 @@
             const text = input.value.trim();
             if (!text) return;
 
-            // عرض رسالة المستخدم
             addMessage(text, true);
             input.value = '';
             
-            // تأثير التحميل
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'msg-bubble ai-msg text-gray-400 text-sm';
+            loadingDiv.id = 'loading';
             loadingDiv.textContent = 'ميمو بيكتب... ✍️';
             chatBox.appendChild(loadingDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                // لو مفيش مفتاح، رد برد وهمي (للاختبار)
-                if (API_KEY.includes("حط_مفتاح")) {
-                    throw new Error("المفتاح مش موجود");
+                if (!API_KEY || API_KEY.includes("AIzaSyBpvU_qU7ocojaPCh3hPY4mLmgnHNezTOs")) {
+                    throw new Error("المفتاح ناقص");
                 }
 
                 const response = await fetch(
@@ -102,21 +96,20 @@
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: `رد عليا باللهجة المصرية كأنك مدرس خصوصي شاطر: ${text}` }] }]
+                            contents: [{ parts: [{ text: `رد باللهجة المصرية: ${text}` }] }]
                         })
                     }
                 );
 
                 const data = await response.json();
                 const reply = data.candidates[0].content.parts[0].text;
-
-                chatBox.removeChild(loadingDiv);
+                
+                document.getElementById('loading').remove();
                 addMessage(reply, false);
 
             } catch (error) {
-                chatBox.removeChild(loadingDiv);
-                // رد احتياطي لو المفتاح مش شغال
-                addMessage("معلش يا بطل، مش قادر أتصل بالمخ دلوقتي. (تأكد من وضع المفتاح في الكود)", false);
+                document.getElementById('loading').remove();
+                addMessage("معلش يا بطل، تأكد إنك حطيت مفتاح API في كود HTML.", false);
             }
         });
     </script>

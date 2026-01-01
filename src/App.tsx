@@ -84,7 +84,6 @@ const App = () => {
           { id: "quran", icon: "📖", label: "تحفيظ القرآن" },
           { id: "planner", icon: "📅", label: "جدول المذاكرة" },
           { id: "settings", icon: "⚙️", label: "الإعدادات" },
-          { id: "Virtual teacher", icon:"👨‍🏫", label "المدرس الافتراضي" },
         ].map(item => (
           <button
             key={item.id}

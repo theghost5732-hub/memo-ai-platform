@@ -84,6 +84,7 @@ const App = () => {
           { id: "quran", icon: "📖", label: "تحفيظ القرآن" },
           { id: "planner", icon: "📅", label: "جدول المذاكرة" },
           { id: "settings", icon: "⚙️", label: "الإعدادات" },
+          { id: "Virtual teacher", icon:"👨‍🏫", label "المدرس الافتراضي" },
         ].map(item => (
           <button
             key={item.id}
@@ -206,8 +207,8 @@ const App = () => {
         
         {currentPage === 'home' && (
           <div style={{ textAlign: "center", padding: "80px 20px" }}>
-            <h1 style={{ fontSize: "48px", marginBottom: "20px", fontWeight: "bold" }}>ميمو 🎓</h1>
-            <p style={{ fontSize: "24px", color: "#94a3b8", marginBottom: "40px" }}>منصتك التعليمية المتكاملة بالذكاء الاصطناعي</p>
+            <h1 style={{ fontSize: "48px", marginBottom: "20px", fontWeight: "bold" }}>M e M o 🎓</h1>
+            <p style={{ fontSize: "24px", color: "#94a3b8", marginBottom: "40px" }}>منصتك التعليمية المتكاملة بالذكاء  اول منصه مستقله بذاتها في مصر</p>
             <button 
               onClick={() => setCurrentPage('chat')}
               style={{ padding: "16px 40px", fontSize: "20px", backgroundColor: "#7c3aed", color: "white", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "bold", boxShadow: "0 10px 15px -3px rgba(124, 58, 237, 0.3)" }}

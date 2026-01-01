@@ -1,346 +1,150 @@
-import { useState } from "react";
+import { useState } from "react"
 
-const App = () => {
-  const [currentPage, setCurrentPage] = useState("home");
+export default function App() {
+  const [page, setPage] = useState("home")
   const [messages, setMessages] = useState([
-    { id: 1, text: "أهلاً بيك! أنا ميمو 🎓 اسألني أي سؤال وأنا هساعدك!", isBot: true }
-  ]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // ضفتلك دي عشان الزرار يهنج وهو بيحمل
+    { id: 1, text: "أهلاً بيك! أنا ميمو 🎓 اسألني أي سؤال!", isBot: true }
+  ])
+  const [input, setInput] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  // دالة الإرسال (خليناها async عشان النت)
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
-    
-    // 1. عرض رسالة المستخدم
-    const userInput = input; // بنحفظ الكلام قبل ما نمسحه
-    const userMsg = { id: Date.now(), text: userInput, isBot: false };
-    setMessages(prev => [...prev, userMsg]);
-    setInput("");
-    setIsLoading(true); // بنشغل وضع التحميل
-    
-    // 2. إرسال الكلام لـ Gemini (ده الكود الجديد)
+  const send = async () => {
+    if (!input.trim() || loading) return
+
+    setMessages(m => [...m, { id: Date.now(), text: input, isBot: false }])
+    const q = input
+    setInput("")
+    setLoading(true)
+
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      
-      // لو مفيش مفتاح، رد برسالة تنبيه
-      if (!apiKey) {
-        throw new Error("المفتاح ناقص");
-      }
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      const key = import.meta.env.VITE_GEMINI_API_KEY
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: `رد باللهجة المصرية العامية كأنك مدرس خصوصي شاطر: ${userInput}` }] }]
+            contents: [{ parts: [{ text: `أنت ميمو مدرس مصري. رد باللهجة المصرية: ${q}` }] }]
           })
         }
-      );
-
-      const data = await response.json();
-      
-      // التأكد من إن الرد وصل سليم
-      const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "معلش مسمعتش كويس.. ممكن تقول تاني؟";
-      
-      // 3. عرض رد ميمو
-      setMessages(prev => [...prev, { id: Date.now() + 1, text: aiReply, isBot: true }]);
-
-    } catch (e) {
-      console.error(e);
-      // رسالة لو حصل خطأ
-      setMessages(prev => [...prev, { 
-        id: Date.now() + 1, 
-        text: "معلش النت معلق أو المفتاح مش مظبوط.. جرب تاني!", 
-        isBot: true 
-      }]);
-    } finally {
-      setIsLoading(false); // بنوقف وضع التحميل
+      )
+      const data = await res.json()
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "معلش مفهمتش، قولي تاني؟"
+      setMessages(m => [...m, { id: Date.now(), text: reply, isBot: true }])
+    } catch {
+      setMessages(m => [...m, { id: Date.now(), text: "فيه مشكلة، جرب تاني! 🔄", isBot: true }])
     }
-  };
+    setLoading(false)
+  }
 
-  // ============ صفحة الشات ============
-  if (currentPage === "chat") {
+  // ========== صفحة الشات ==========
+  if (page === "chat") {
     return (
-      <div style={{ 
-        minHeight: "100vh", 
-        backgroundColor: "#0f172a", 
-        display: "flex", 
-        flexDirection: "column",
-        direction: "rtl",
-        fontFamily: "system-ui, -apple-system, sans-serif"
-      }}>
+      <div style={{ minHeight: "100vh", background: "#0f172a", display: "flex", flexDirection: "column", direction: "rtl", fontFamily: "system-ui" }}>
         
         {/* الهيدر */}
-        <div style={{ 
-          backgroundColor: "#1e293b", 
-          padding: "16px", 
-          display: "flex", 
-          alignItems: "center", 
-          gap: "12px",
-          borderBottom: "1px solid #334155"
-        }}>
-          <button 
-            onClick={() => setCurrentPage("home")}
-            style={{ 
-              background: "none", 
-              border: "none", 
-              color: "#94a3b8", 
-              fontSize: "20px",
-              cursor: "pointer"
-            }}
-          >
-            ← رجوع
-          </button>
-          <div style={{ 
-            width: "45px", 
-            height: "45px", 
-            background: "linear-gradient(135deg, #8b5cf6, #ec4899)", 
-            borderRadius: "50%", 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center",
-            fontSize: "24px"
-          }}>
-            🤖
-          </div>
+        <div style={{ background: "#1e293b", padding: 16, display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid #334155" }}>
+          <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 18, cursor: "pointer" }}>→ رجوع</button>
+          <div style={{ width: 40, height: 40, background: "linear-gradient(135deg, #8b5cf6, #ec4899)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🤖</div>
           <div>
-            <h1 style={{ color: "white", margin: 0, fontSize: "18px", fontWeight: "bold" }}>ميمو</h1>
-            <p style={{ color: "#4ade80", margin: 0, fontSize: "12px" }}>● متصل الآن</p>
+            <div style={{ color: "#fff", fontWeight: "bold" }}>ميمو</div>
+            <div style={{ color: loading ? "#fbbf24" : "#4ade80", fontSize: 12 }}>{loading ? "⏳ بيكتب..." : "● متصل"}</div>
           </div>
         </div>
 
         {/* الرسائل */}
-        <div style={{ 
-          flex: 1, 
-          padding: "20px", 
-          overflowY: "auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px"
-        }}>
-          {messages.map(msg => (
-            <div 
-              key={msg.id} 
-              style={{ 
-                display: "flex", 
-                justifyContent: msg.isBot ? "flex-start" : "flex-end" 
-              }}
-            >
-              {/* صورة الروبوت أو الشخص */}
+        <div style={{ flex: 1, padding: 16, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
+          {messages.map(m => (
+            <div key={m.id} style={{ display: "flex", justifyContent: m.isBot ? "flex-start" : "flex-end" }}>
               <div style={{
-                width: "35px", height: "35px", borderRadius: "50%",
-                background: msg.isBot ? "#3b82f6" : "#8b5cf6",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                marginLeft: msg.isBot ? "0" : "10px",
-                marginRight: msg.isBot ? "10px" : "0",
-                fontSize: "18px"
+                maxWidth: "80%",
+                padding: "12px 16px",
+                borderRadius: m.isBot ? "16px 16px 16px 4px" : "16px 16px 4px 16px",
+                background: m.isBot ? "#1e293b" : "#8b5cf6",
+                color: "#fff",
+                fontSize: 15,
+                lineHeight: 1.6,
+                border: m.isBot ? "1px solid #334155" : "none"
               }}>
-                {msg.isBot ? "🤖" : "👤"}
-              </div>
-
-              <div style={{ 
-                maxWidth: "75%", 
-                padding: "14px 18px", 
-                borderRadius: msg.isBot ? "4px 20px 20px 20px" : "20px 20px 20px 4px",
-                backgroundColor: msg.isBot ? "#1e293b" : "#8b5cf6",
-                color: "white",
-                fontSize: "15px",
-                lineHeight: "1.6",
-                border: msg.isBot ? "1px solid #334155" : "none"
-              }}>
-                {msg.text}
+                {m.text}
               </div>
             </div>
           ))}
-          {isLoading && <div style={{ color: "#94a3b8", fontSize: "14px", marginRight: "50px" }}>ميمو بيكتب... ✍️</div>}
         </div>
 
         {/* الإدخال */}
-        <div style={{ 
-          backgroundColor: "#1e293b", 
-          padding: "16px", 
-          display: "flex", 
-          gap: "12px",
-          borderTop: "1px solid #334155"
-        }}>
+        <div style={{ background: "#1e293b", padding: 12, display: "flex", gap: 10, borderTop: "1px solid #334155" }}>
           <input
-            type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="اكتب سؤالك هنا..."
-            disabled={isLoading}
-            style={{ 
-              flex: 1, 
-              backgroundColor: "#334155", 
-              border: "none",
-              borderRadius: "12px",
-              padding: "14px 18px",
-              color: "white",
-              fontSize: "16px",
-              outline: "none"
-            }}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && send()}
+            placeholder="اكتب سؤالك..."
+            disabled={loading}
+            style={{ flex: 1, background: "#334155", border: "none", borderRadius: 10, padding: "12px 16px", color: "#fff", fontSize: 16, outline: "none" }}
           />
-          <button 
-            onClick={sendMessage}
-            disabled={isLoading}
-            style={{ 
-              padding: "14px 28px", 
-              background: isLoading ? "#475569" : "linear-gradient(135deg, #8b5cf6, #ec4899)",
-              border: "none",
-              borderRadius: "12px",
-              color: "white",
-              fontWeight: "bold",
-              fontSize: "16px",
-              cursor: isLoading ? "not-allowed" : "pointer"
-            }}
+          <button
+            onClick={send}
+            disabled={loading || !input.trim()}
+            style={{ padding: "12px 24px", background: loading ? "#475569" : "linear-gradient(135deg, #8b5cf6, #ec4899)", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: loading ? "not-allowed" : "pointer" }}
           >
-            {isLoading ? "..." : "إرسال 🚀"}
+            {loading ? "⏳" : "إرسال"}
           </button>
         </div>
       </div>
-    );
+    )
   }
 
-  // ============ الصفحة الرئيسية ============
+  // ========== الصفحة الرئيسية ==========
   return (
-    <div style={{ 
-      minHeight: "100vh", 
-      background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)",
-      color: "white",
-      direction: "rtl",
-      fontFamily: "system-ui, -apple-system, sans-serif"
-    }}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0f172a, #1e1b4b, #0f172a)", color: "#fff", direction: "rtl", fontFamily: "system-ui" }}>
       
       {/* الهيدر */}
-      <nav style={{ 
-        padding: "20px 40px", 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center"
-      }}>
-        <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#a78bfa" }}>
-          🎓 ميمو
-        </h1>
-        <button 
-          onClick={() => setCurrentPage("chat")}
-          style={{ 
-            padding: "12px 24px", 
-            background: "linear-gradient(135deg, #8b5cf6, #ec4899)",
-            border: "none",
-            borderRadius: "10px",
-            color: "white",
-            fontWeight: "bold",
-            fontSize: "16px",
-            cursor: "pointer"
-          }}
-        >
+      <nav style={{ padding: "20px 30px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: 26, fontWeight: "bold", color: "#a78bfa" }}>🎓 ميمو</div>
+        <button onClick={() => setPage("chat")} style={{ padding: "10px 20px", background: "linear-gradient(135deg, #8b5cf6, #ec4899)", border: "none", borderRadius: 8, color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
           ابدأ المذاكرة 🚀
         </button>
       </nav>
 
-      {/* المحتوى */}
-      <main style={{ 
-        textAlign: "center", 
-        padding: "80px 20px" 
-      }}>
-        <div style={{ 
-          display: "inline-block",
-          padding: "8px 20px", 
-          backgroundColor: "rgba(139, 92, 246, 0.2)", 
-          borderRadius: "50px",
-          marginBottom: "30px",
-          border: "1px solid rgba(139, 92, 246, 0.3)"
-        }}>
-          <span style={{ fontSize: "14px" }}>✨ أول منصة تعليمية بالذكاء الاصطناعي في مصر</span>
+      {/* المحتوى الرئيسي */}
+      <main style={{ textAlign: "center", padding: "60px 20px" }}>
+        <div style={{ display: "inline-block", padding: "8px 16px", background: "rgba(139,92,246,0.2)", borderRadius: 50, marginBottom: 24, border: "1px solid rgba(139,92,246,0.3)", fontSize: 14 }}>
+          ✨ أول منصة تعليمية بالذكاء الاصطناعي في مصر
         </div>
         
-        <h2 style={{ fontSize: "48px", fontWeight: "bold", marginBottom: "20px", lineHeight: "1.3" }}>
-          مدرسك الخصوصي
-          <br />
+        <h1 style={{ fontSize: "clamp(32px, 6vw, 56px)", fontWeight: "bold", marginBottom: 16, lineHeight: 1.3 }}>
+          مدرسك الخصوصي<br />
           <span style={{ color: "#a78bfa" }}>بالذكاء الاصطناعي</span>
-        </h2>
+        </h1>
         
-        <p style={{ fontSize: "20px", color: "#94a3b8", marginBottom: "40px", maxWidth: "600px", margin: "0 auto 40px" }}>
+        <p style={{ fontSize: 18, color: "#94a3b8", marginBottom: 32, maxWidth: 500, marginInline: "auto" }}>
           ميمو بيفهمك، بيشرحلك بالمصري، وبيساعدك تجيب أعلى الدرجات!
-          <br />
-          متاح 24 ساعة، وبيعرف منهجك كويس!
         </p>
         
-        <button 
-          onClick={() => setCurrentPage("chat")}
-          style={{ 
-            padding: "18px 40px", 
-            background: "linear-gradient(135deg, #8b5cf6, #ec4899)",
-            border: "none",
-            borderRadius: "14px",
-            color: "white",
-            fontWeight: "bold",
-            fontSize: "20px",
-            cursor: "pointer",
-            boxShadow: "0 10px 40px rgba(139, 92, 246, 0.4)"
-          }}
-        >
+        <button onClick={() => setPage("chat")} style={{ padding: "16px 32px", background: "linear-gradient(135deg, #8b5cf6, #ec4899)", border: "none", borderRadius: 12, color: "#fff", fontWeight: "bold", fontSize: 18, cursor: "pointer", boxShadow: "0 8px 32px rgba(139,92,246,0.4)" }}>
           ابدأ رحلتك مجاناً 🚀
         </button>
 
         {/* المميزات */}
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "24px",
-          maxWidth: "1000px",
-          margin: "80px auto 0",
-          padding: "0 20px"
-        }}>
-          <div style={{ 
-            backgroundColor: "rgba(30, 41, 59, 0.5)", 
-            padding: "30px", 
-            borderRadius: "16px",
-            border: "1px solid rgba(255,255,255,0.1)"
-          }}>
-            <div style={{ fontSize: "40px", marginBottom: "16px" }}>🧠</div>
-            <h3 style={{ fontSize: "20px", marginBottom: "10px" }}>ذكاء اصطناعي متقدم</h3>
-            <p style={{ color: "#94a3b8", fontSize: "15px" }}>بيفهم سؤالك حتى لو كتبته بالعامية</p>
-          </div>
-          
-          <div style={{ 
-            backgroundColor: "rgba(30, 41, 59, 0.5)", 
-            padding: "30px", 
-            borderRadius: "16px",
-            border: "1px solid rgba(255,255,255,0.1)"
-          }}>
-            <div style={{ fontSize: "40px", marginBottom: "16px" }}>📚</div>
-            <h3 style={{ fontSize: "20px", marginBottom: "10px" }}>المنهج المصري كامل</h3>
-            <p style={{ color: "#94a3b8", fontSize: "15px" }}>من KG لحد ثانوية عامة</p>
-          </div>
-          
-          <div style={{ 
-            backgroundColor: "rgba(30, 41, 59, 0.5)", 
-            padding: "30px", 
-            borderRadius: "16px",
-            border: "1px solid rgba(255,255,255,0.1)"
-          }}>
-            <div style={{ fontSize: "40px", marginBottom: "16px" }}>🎯</div>
-            <h3 style={{ fontSize: "20px", marginBottom: "10px" }}>امتحانات ذكية</h3>
-            <p style={{ color: "#94a3b8", fontSize: "15px" }}>بيعملك امتحانات ويصححلك فوراً</p>
-          </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20, maxWidth: 900, margin: "60px auto 0", padding: "0 20px" }}>
+          {[
+            { icon: "🧠", title: "ذكاء اصطناعي", desc: "بيفهم العامية المصرية" },
+            { icon: "📚", title: "المنهج كامل", desc: "من KG لثانوية عامة" },
+            { icon: "🎯", title: "امتحانات ذكية", desc: "بيصحح ويقيّم مستواك" }
+          ].map((f, i) => (
+            <div key={i} style={{ background: "rgba(30,41,59,0.6)", padding: 24, borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>{f.icon}</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", marginBottom: 6 }}>{f.title}</div>
+              <div style={{ color: "#94a3b8", fontSize: 14 }}>{f.desc}</div>
+            </div>
+          ))}
         </div>
       </main>
 
       {/* الفوتر */}
-      <footer style={{ 
-        textAlign: "center", 
-        padding: "30px", 
-        borderTop: "1px solid rgba(255,255,255,0.1)",
-        marginTop: "60px"
-      }}>
-        <p style={{ color: "#64748b" }}>© 2024 ميمو - صنع بـ ❤️ بواسطة المهندس محمد ربيع</p>
+      <footer style={{ textAlign: "center", padding: 24, borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: 40, color: "#64748b", fontSize: 14 }}>
+        © 2024 ميمو - صنع بـ ❤️ بواسطة المهندس محمد ربيع
       </footer>
     </div>
-  );
-};
-
-export default App;
+  )
+}

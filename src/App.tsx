@@ -17,14 +17,13 @@ export default function App() {
     setLoading(true)
 
     try {
-      const key = import.meta.env.VITE_GEMINI_API_KEY
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`,
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBpvU_qU7ocojaPCh3hPY4mLmgnHNezTOs",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: `أنت ميمو مدرس مصري. رد باللهجة المصرية: ${q}` }] }]
+            contents: [{ parts: [{ text: `أنت ميمو مدرس مصري ودود وذكي. رد باللهجة المصرية البسيطة: ${q}` }] }]
           })
         }
       )
@@ -37,22 +36,19 @@ export default function App() {
     setLoading(false)
   }
 
-  // ========== صفحة الشات ==========
   if (page === "chat") {
     return (
       <div style={{ minHeight: "100vh", background: "#0f172a", display: "flex", flexDirection: "column", direction: "rtl", fontFamily: "system-ui" }}>
         
-        {/* الهيدر */}
         <div style={{ background: "#1e293b", padding: 16, display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid #334155" }}>
           <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 18, cursor: "pointer" }}>→ رجوع</button>
           <div style={{ width: 40, height: 40, background: "linear-gradient(135deg, #8b5cf6, #ec4899)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🤖</div>
           <div>
             <div style={{ color: "#fff", fontWeight: "bold" }}>ميمو</div>
-            <div style={{ color: loading ? "#fbbf24" : "#4ade80", fontSize: 12 }}>{loading ? "⏳ بيكتب..." : "● متصل"}</div>
+            <div style={{ color: loading ? "#fbbf24" : "#4ade80", fontSize: 12 }}>{loading ? "⏳ بيفكر..." : "● متصل"}</div>
           </div>
         </div>
 
-        {/* الرسائل */}
         <div style={{ flex: 1, padding: 16, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
           {messages.map(m => (
             <div key={m.id} style={{ display: "flex", justifyContent: m.isBot ? "flex-start" : "flex-end" }}>
@@ -64,7 +60,8 @@ export default function App() {
                 color: "#fff",
                 fontSize: 15,
                 lineHeight: 1.6,
-                border: m.isBot ? "1px solid #334155" : "none"
+                border: m.isBot ? "1px solid #334155" : "none",
+                whiteSpace: "pre-wrap"
               }}>
                 {m.text}
               </div>
@@ -72,7 +69,6 @@ export default function App() {
           ))}
         </div>
 
-        {/* الإدخال */}
         <div style={{ background: "#1e293b", padding: 12, display: "flex", gap: 10, borderTop: "1px solid #334155" }}>
           <input
             value={input}
@@ -94,11 +90,9 @@ export default function App() {
     )
   }
 
-  // ========== الصفحة الرئيسية ==========
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0f172a, #1e1b4b, #0f172a)", color: "#fff", direction: "rtl", fontFamily: "system-ui" }}>
       
-      {/* الهيدر */}
       <nav style={{ padding: "20px 30px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontSize: 26, fontWeight: "bold", color: "#a78bfa" }}>🎓 ميمو</div>
         <button onClick={() => setPage("chat")} style={{ padding: "10px 20px", background: "linear-gradient(135deg, #8b5cf6, #ec4899)", border: "none", borderRadius: 8, color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
@@ -106,7 +100,6 @@ export default function App() {
         </button>
       </nav>
 
-      {/* المحتوى الرئيسي */}
       <main style={{ textAlign: "center", padding: "60px 20px" }}>
         <div style={{ display: "inline-block", padding: "8px 16px", background: "rgba(139,92,246,0.2)", borderRadius: 50, marginBottom: 24, border: "1px solid rgba(139,92,246,0.3)", fontSize: 14 }}>
           ✨ أول منصة تعليمية بالذكاء الاصطناعي في مصر
@@ -125,7 +118,6 @@ export default function App() {
           ابدأ رحلتك مجاناً 🚀
         </button>
 
-        {/* المميزات */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20, maxWidth: 900, margin: "60px auto 0", padding: "0 20px" }}>
           {[
             { icon: "🧠", title: "ذكاء اصطناعي", desc: "بيفهم العامية المصرية" },
@@ -141,9 +133,8 @@ export default function App() {
         </div>
       </main>
 
-      {/* الفوتر */}
       <footer style={{ textAlign: "center", padding: 24, borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: 40, color: "#64748b", fontSize: 14 }}>
-        © 2024 ميمو - صنع بـ ❤️ بواسطة المهندس محمد ربيع
+        © 2026 ميمو - صنع بـ  بواسطة المهندس محمد ربيع
       </footer>
     </div>
   )

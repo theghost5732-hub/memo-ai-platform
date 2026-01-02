@@ -1,161 +1,127 @@
-import React, { useState, useEffect, useRef } from "react";
-import { 
-  Home, MessageCircle, Book, PenTool, 
-  Calendar, Settings, Mic, Brain, 
-  ChevronRight, Send, Menu, X 
-} from "lucide-react";
+import { useState, useRef, useEffect, ChangeEvent, KeyboardEvent } from "react";
 
-// ==========================================
-// 1. إعدادات ومكونات التصميم (iOS Style)
-// ==========================================
+// ============ مكون الإدخال منفصل ============
+function ChatInputBox({ onSendMessage, loading }: { onSendMessage: (msg: string) => void; loading: boolean }) {
+  const [text, setText] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
-const API_KEY = "AIzaSyA1BNXdW6Wa-RLXG7WtXOzXSR2PtPddE94"; // مفتاحك الجديد
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setText(e.target.value);
+  };
 
-// زرار القائمة (ستايل أيفون)
-const MenuButton = ({ icon: Icon, label, isActive, onClick, colorClass }: any) => (
-  <button
-    onClick={onClick}
-    className={`group w-full flex items-center gap-4 p-3 rounded-2xl transition-all duration-300 backdrop-blur-md border 
-    ${isActive 
-      ? "bg-white/10 border-white/20 shadow-lg shadow-black/20 translate-x-2" 
-      : "bg-transparent border-transparent hover:bg-white/5 text-slate-400"}`}
-  >
-    <div className={`w-10 h-10 rounded-[14px] flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-110 ${colorClass}`}>
-      <Icon size={20} strokeWidth={2.5} />
-    </div>
-    <span className={`font-bold text-sm tracking-wide ${isActive ? "text-white" : "text-slate-400 group-hover:text-white"}`}>
-      {label}
-    </span>
-    {isActive && <div className="mr-auto w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>}
-  </button>
-);
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey && text.trim() && !loading) {
+      e.preventDefault();
+      onSendMessage(text.trim());
+      setText("");
+    }
+  };
 
-// كارت الكورسات (Glass Card)
-const CourseCard = ({ title, sub, color }: any) => (
-  <div className="relative group overflow-hidden rounded-[24px] bg-[#1c1c1e] border border-white/5 hover:border-white/10 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl">
-    <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 bg-gradient-to-br ${color}`}></div>
-    <div className="h-32 bg-[#2c2c2e] relative overflow-hidden">
-      <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-20`}></div>
-      <div className="absolute bottom-3 right-3 bg-black/40 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold text-white border border-white/10">
-        ثانوية عامة
-      </div>
-    </div>
-    <div className="p-5">
-      <h3 className="text-lg font-bold text-white mb-1">{title}</h3>
-      <p className="text-slate-500 text-xs leading-relaxed mb-4">{sub}</p>
-      <button className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm font-bold border border-white/5 transition-all">
-        بدء المذاكرة
-      </button>
-    </div>
-  </div>
-);
-
-// ==========================================
-// 2. صفحة الشات (The Brain)
-// ==========================================
-
-const ChatInterface = ({ messages, input, setInput, handleSend, isLoading }: any) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const handleClick = () => {
+    if (text.trim() && !loading) {
+      onSendMessage(text.trim());
+      setText("");
+      inputRef.current?.focus();
+    }
+  };
 
   return (
-    <div className="flex flex-col h-screen bg-[#000000]">
-      {/* Header */}
-      <div className="h-20 bg-[#1c1c1e]/80 backdrop-blur-xl border-b border-white/5 flex items-center px-6 sticky top-0 z-20 justify-between">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-              <Brain size={24} className="text-white" />
-            </div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#1c1c1e] rounded-full"></div>
-          </div>
-          <div>
-            <h2 className="text-white font-bold text-lg">المساعد ميمو</h2>
-            <p className="text-indigo-400 text-xs font-medium">يعمل بواسطة Gemini AI</p>
-          </div>
-        </div>
+    <div style={{
+      padding: "24px 32px",
+      background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(15,15,25,0.98) 20%)",
+      backdropFilter: "blur(40px)",
+      borderTop: "1px solid rgba(255,255,255,0.08)",
+      display: "flex",
+      gap: "16px",
+      alignItems: "center"
+    }}>
+      <div style={{
+        flex: 1,
+        position: "relative"
+      }}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={text}
+          onChange={handleChange}
+          onKeyDown={handleKeyPress}
+          placeholder="اكتب رسالتك هنا..."
+          disabled={loading}
+          autoComplete="off"
+          style={{
+            width: "100%",
+            padding: "20px 28px",
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "20px",
+            color: "white",
+            fontSize: "17px",
+            outline: "none",
+            fontFamily: "inherit",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            boxShadow: "inset 0 2px 10px rgba(0,0,0,0.2)"
+          }}
+        />
       </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
-        {messages.map((msg: any) => (
-          <div key={msg.id} className={`flex ${msg.isBot ? "justify-start" : "justify-end"} animate-fade-in-up`}>
-            <div className={`max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] text-[15px] leading-7 shadow-sm backdrop-blur-sm relative
-              ${msg.isBot 
-                ? "bg-[#1c1c1e] text-slate-200 rounded-tl-none border border-white/5" 
-                : "bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-none shadow-purple-900/20"}`}>
-              {msg.text}
-            </div>
-          </div>
-        ))}
-        {isLoading && (
-          <div className="flex items-center gap-2 text-slate-500 text-sm mr-4">
-            <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce delay-100"></div>
-            <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce delay-200"></div>
-          </div>
-        )}
-        <div ref={scrollRef} />
-      </div>
-
-      {/* Input */}
-      <div className="p-4 bg-[#1c1c1e]/80 backdrop-blur-xl border-t border-white/5">
-        <div className="max-w-4xl mx-auto relative flex items-center gap-3">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="اكتب سؤالك هنا..."
-            className="flex-1 bg-[#2c2c2e] text-white px-6 py-4 rounded-[20px] border-none focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all placeholder:text-slate-500 font-cairo text-sm"
-            disabled={isLoading}
-          />
-          <button 
-            onClick={handleSend}
-            disabled={isLoading || !input.trim()}
-            className="w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center text-white transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-90"
-          >
-            <Send size={20} className={isLoading ? "animate-pulse" : ""} />
-          </button>
-        </div>
-      </div>
+      <button
+        onClick={handleClick}
+        disabled={loading || !text.trim()}
+        style={{
+          width: "60px",
+          height: "60px",
+          background: loading || !text.trim() 
+            ? "rgba(255,255,255,0.1)" 
+            : "linear-gradient(135deg, #6366F1, #8B5CF6, #A855F7)",
+          border: "none",
+          borderRadius: "20px",
+          color: "white",
+          fontSize: "24px",
+          cursor: loading || !text.trim() ? "not-allowed" : "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: loading || !text.trim() 
+            ? "none" 
+            : "0 10px 40px rgba(139,92,246,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          transform: loading || !text.trim() ? "scale(1)" : "scale(1)"
+        }}
+      >
+        {loading ? "◌" : "↑"}
+      </button>
     </div>
   );
-};
+}
 
-// ==========================================
-// 3. التطبيق الرئيسي
-// ==========================================
-
-const App = () => {
-  const [activeTab, setActiveTab] = useState("home");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+// ============ التطبيق الرئيسي ============
+function App() {
+  const [currentPage, setCurrentPage] = useState("home");
   const [messages, setMessages] = useState([
-    { id: 1, text: "أهلاً بيك يا بطل! 👋 أنا ميمو.. المدرس الشخصي بتاعك. جاهز نذاكر إيه النهاردة؟", isBot: true }
+    { id: 1, text: "أهلاً بيك! 👋\n\nأنا ميمو، مساعدك الذكي للدراسة. اسألني أي سؤال في أي مادة وهساعدك تفهم وتتفوق! 🎯", isBot: true }
   ]);
-  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // --- Logic الشات (تم التصحيح لـ gemini-pro) ---
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-    
-    const userText = input;
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendMessage = async (userText: string) => {
     setMessages(prev => [...prev, { id: Date.now(), text: userText, isBot: false }]);
-    setInput("");
     setIsLoading(true);
 
     try {
-      // استخدام gemini-pro لأنه الأضمن
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`,
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyA1BNXdW6Wa-RLXG7WtXOzXSR2PtPddE94",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: `أنت ميمو، مدرس مصري شاطر. رد باللهجة المصرية: ${userText}` }] }]
+            contents: [{
+              parts: [{
+                text: `أنت "ميمو" - مساعد تعليمي مصري ذكي وودود. رد باللهجة المصرية العامية بطريقة مبسطة وشيقة. شجع الطالب واستخدم الإيموجي. لو سألوك مين عملك قول "المهندس محمد ربيع". السؤال: ${userText}`
+              }]
+            }]
           })
         }
       );
@@ -163,156 +129,755 @@ const App = () => {
       if (!response.ok) throw new Error("API Error");
 
       const data = await response.json();
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "معلش الشبكة قطعت.. قول تاني؟";
+      const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "معلش مفهمتش السؤال، ممكن توضحه أكتر؟ 🤔";
       
-      setMessages(prev => [...prev, { id: Date.now() + 1, text: reply, isBot: true }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { id: Date.now() + 1, text: "حصل خطأ في الاتصال، تأكد من النت!", isBot: true }]);
+      setMessages(prev => [...prev, { id: Date.now() + 1, text: aiReply, isBot: true }]);
+    } catch (err) {
+      console.error(err);
+      setMessages(prev => [...prev, { id: Date.now() + 1, text: "عذراً، حدث خطأ في الاتصال. حاول مرة أخرى! 🔄", isBot: true }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const navTo = (id: string) => {
-    setActiveTab(id);
-    setSidebarOpen(false);
-  };
+  const menuItems = [
+    { id: "home", icon: "⌂", label: "الرئيسية", desc: "الصفحة الرئيسية" },
+    { id: "chat", icon: "◎", label: "المساعد الذكي", desc: "تحدث مع ميمو" },
+    { id: "courses", icon: "▦", label: "المكتبة", desc: "الكورسات والدروس" },
+    { id: "exams", icon: "◈", label: "الاختبارات", desc: "امتحانات تفاعلية" },
+    { id: "quran", icon: "❋", label: "القرآن", desc: "تحفيظ ومراجعة" },
+    { id: "planner", icon: "▤", label: "المخطط", desc: "جدول المذاكرة" },
+    { id: "stats", icon: "◐", label: "الإحصائيات", desc: "تتبع تقدمك" },
+    { id: "settings", icon: "⚙", label: "الإعدادات", desc: "تخصيص التطبيق" }
+  ];
+
+  // ============ الصفحة الرئيسية ============
+  const HomePage = () => (
+    <div style={{
+      minHeight: "100vh",
+      background: "#000000",
+      position: "relative",
+      overflow: "hidden"
+    }}>
+      {/* الخلفية المتحركة */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        background: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120,80,255,0.15), transparent)",
+        pointerEvents: "none"
+      }} />
+      <div style={{
+        position: "absolute",
+        top: "30%",
+        left: "10%",
+        width: "600px",
+        height: "600px",
+        background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)",
+        borderRadius: "50%",
+        filter: "blur(60px)",
+        animation: "float 8s ease-in-out infinite"
+      }} />
+      <div style={{
+        position: "absolute",
+        bottom: "20%",
+        right: "5%",
+        width: "500px",
+        height: "500px",
+        background: "radial-gradient(circle, rgba(168,85,247,0.1) 0%, transparent 70%)",
+        borderRadius: "50%",
+        filter: "blur(60px)",
+        animation: "float 10s ease-in-out infinite reverse"
+      }} />
+
+      {/* الهيدر */}
+      <nav style={{
+        padding: "24px 48px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        position: "relative",
+        zIndex: 10,
+        borderBottom: "1px solid rgba(255,255,255,0.06)"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{
+            width: "48px",
+            height: "48px",
+            background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+            borderRadius: "14px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "22px",
+            boxShadow: "0 8px 32px rgba(99,102,241,0.3)"
+          }}>
+            M
+          </div>
+          <div>
+            <span style={{
+              fontSize: "24px",
+              fontWeight: "700",
+              color: "white",
+              letterSpacing: "-0.5px"
+            }}>Memo</span>
+            <span style={{
+              fontSize: "12px",
+              color: "rgba(255,255,255,0.4)",
+              display: "block",
+              marginTop: "-2px"
+            }}>AI Learning Platform</span>
+          </div>
+        </div>
+        
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <button style={{
+            padding: "12px 24px",
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "12px",
+            color: "rgba(255,255,255,0.8)",
+            fontSize: "15px",
+            fontWeight: "500",
+            cursor: "pointer",
+            backdropFilter: "blur(20px)"
+          }}>
+            تسجيل الدخول
+          </button>
+          <button onClick={() => setCurrentPage("chat")} style={{
+            padding: "12px 28px",
+            background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+            border: "none",
+            borderRadius: "12px",
+            color: "white",
+            fontSize: "15px",
+            fontWeight: "600",
+            cursor: "pointer",
+            boxShadow: "0 8px 32px rgba(99,102,241,0.35)"
+          }}>
+            ابدأ الآن
+          </button>
+        </div>
+      </nav>
+
+      {/* المحتوى الرئيسي */}
+      <main style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+        padding: "120px 48px",
+        position: "relative",
+        zIndex: 10
+      }}>
+        <div style={{ textAlign: "center", marginBottom: "80px" }}>
+          {/* الشارة */}
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 20px",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "100px",
+            marginBottom: "32px",
+            backdropFilter: "blur(20px)"
+          }}>
+            <span style={{ width: "6px", height: "6px", background: "#22C55E", borderRadius: "50%" }} />
+            <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "14px", fontWeight: "500" }}>
+              منصة التعليم الذكي الأولى في مصر
+            </span>
+          </div>
+
+          {/* العنوان */}
+          <h1 style={{
+            fontSize: "clamp(48px, 8vw, 80px)",
+            fontWeight: "800",
+            lineHeight: "1.05",
+            marginBottom: "28px",
+            color: "white",
+            letterSpacing: "-2px"
+          }}>
+            تعلّم بذكاء
+            <br />
+            <span style={{
+              background: "linear-gradient(135deg, #818CF8, #C084FC, #E879F9)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent"
+            }}>مع الذكاء الاصطناعي</span>
+          </h1>
+
+          {/* الوصف */}
+          <p style={{
+            fontSize: "20px",
+            color: "rgba(255,255,255,0.5)",
+            maxWidth: "560px",
+            margin: "0 auto 48px",
+            lineHeight: "1.7",
+            fontWeight: "400"
+          }}>
+            مساعدك الشخصي للدراسة متاح على مدار الساعة.
+            <br />
+            شرح مبسط، امتحانات ذكية، وخطط مذاكرة مخصصة.
+          </p>
+
+          {/* الأزرار */}
+          <div style={{ display: "flex", justifyContent: "center", gap: "16px", flexWrap: "wrap" }}>
+            <button onClick={() => setCurrentPage("chat")} style={{
+              padding: "18px 40px",
+              fontSize: "17px",
+              fontWeight: "600",
+              background: "white",
+              border: "none",
+              borderRadius: "14px",
+              color: "#0F0F0F",
+              cursor: "pointer",
+              boxShadow: "0 16px 48px rgba(255,255,255,0.15)",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              transition: "all 0.3s ease"
+            }}>
+              <span>ابدأ المحادثة</span>
+              <span style={{ fontSize: "20px" }}>→</span>
+            </button>
+            <button onClick={() => setCurrentPage("courses")} style={{
+              padding: "18px 40px",
+              fontSize: "17px",
+              fontWeight: "600",
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "14px",
+              color: "white",
+              cursor: "pointer",
+              backdropFilter: "blur(20px)",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px"
+            }}>
+              <span style={{ fontSize: "18px" }}>▶</span>
+              <span>استكشف المحتوى</span>
+            </button>
+          </div>
+        </div>
+
+        {/* المميزات */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gap: "20px",
+          marginTop: "100px"
+        }}>
+          {[
+            { 
+              icon: "◎", 
+              title: "مساعد ذكي 24/7", 
+              desc: "اسأل أي سؤال في أي وقت واحصل على شرح مفصل ومبسط باللهجة المصرية",
+              gradient: "linear-gradient(135deg, #6366F1, #8B5CF6)"
+            },
+            { 
+              icon: "◈", 
+              title: "اختبارات تفاعلية", 
+              desc: "امتحانات ذكية تتكيف مع مستواك وتساعدك تحدد نقاط الضعف والقوة",
+              gradient: "linear-gradient(135deg, #8B5CF6, #A855F7)"
+            },
+            { 
+              icon: "▤", 
+              title: "خطط مخصصة", 
+              desc: "جداول مذاكرة مصممة خصيصاً ليك بناءً على وقتك وأهدافك الدراسية",
+              gradient: "linear-gradient(135deg, #A855F7, #D946EF)"
+            }
+          ].map((f, i) => (
+            <div key={i} style={{
+              background: "rgba(255,255,255,0.02)",
+              backdropFilter: "blur(40px)",
+              padding: "36px",
+              borderRadius: "24px",
+              border: "1px solid rgba(255,255,255,0.06)",
+              transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              cursor: "pointer"
+            }}>
+              <div style={{
+                width: "56px",
+                height: "56px",
+                background: f.gradient,
+                borderRadius: "16px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "24px",
+                marginBottom: "24px",
+                color: "white",
+                boxShadow: `0 12px 32px ${f.gradient.includes("6366F1") ? "rgba(99,102,241,0.3)" : "rgba(168,85,247,0.3)"}`
+              }}>
+                {f.icon}
+              </div>
+              <h3 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "12px", color: "white" }}>
+                {f.title}
+              </h3>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "15px", lineHeight: "1.7" }}>
+                {f.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* الإحصائيات */}
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "80px",
+          marginTop: "120px",
+          flexWrap: "wrap"
+        }}>
+          {[
+            { number: "50K+", label: "طالب نشط" },
+            { number: "98%", label: "نسبة الرضا" },
+            { number: "1M+", label: "سؤال تم الإجابة عليه" }
+          ].map((stat, i) => (
+            <div key={i} style={{ textAlign: "center" }}>
+              <div style={{
+                fontSize: "48px",
+                fontWeight: "800",
+                background: "linear-gradient(135deg, #818CF8, #C084FC)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                letterSpacing: "-1px"
+              }}>
+                {stat.number}
+              </div>
+              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "15px", marginTop: "8px" }}>
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      {/* الفوتر */}
+      <footer style={{
+        padding: "32px 48px",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        position: "relative",
+        zIndex: 10,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: "16px"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "14px" }}>
+            Developed by Mohamed.Rabia19
+          </span>
+          <span style={{ color: "rgba(255,255,255,0.2)" }}>•</span>
+          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "14px" }}>
+            @2026 294.empire
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: "32px" }}>
+          {["الخصوصية", "الشروط", "الدعم"].map((link, i) => (
+            <a key={i} href="#" style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px", textDecoration: "none" }}>
+              {link}
+            </a>
+          ))}
+        </div>
+      </footer>
+
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-30px) rotate(5deg); }
+        }
+      `}</style>
+    </div>
+  );
+
+  // ============ صفحة الشات ============
+  const ChatPage = () => (
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      height: "100vh",
+      background: "#000000"
+    }}>
+      {/* هيدر الشات */}
+      <div style={{
+        padding: "20px 32px",
+        background: "rgba(0,0,0,0.8)",
+        backdropFilter: "blur(40px)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{
+            width: "48px",
+            height: "48px",
+            background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+            borderRadius: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "20px",
+            color: "white",
+            boxShadow: "0 8px 24px rgba(99,102,241,0.3)"
+          }}>
+            M
+          </div>
+          <div>
+            <h2 style={{ fontSize: "18px", fontWeight: "700", color: "white", margin: 0, letterSpacing: "-0.3px" }}>
+              Memo AI
+            </h2>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              marginTop: "2px"
+            }}>
+              <span style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                background: isLoading ? "#FBBF24" : "#22C55E",
+                boxShadow: isLoading ? "0 0 12px #FBBF24" : "0 0 12px #22C55E"
+              }} />
+              <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>
+                {isLoading ? "يكتب الرد..." : "متصل الآن"}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <button 
+          onClick={() => setCurrentPage("home")}
+          style={{
+            padding: "10px 20px",
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "10px",
+            color: "rgba(255,255,255,0.7)",
+            fontSize: "14px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
+          }}
+        >
+          <span>←</span>
+          <span>رجوع</span>
+        </button>
+      </div>
+
+      {/* الرسائل */}
+      <div style={{
+        flex: 1,
+        padding: "32px",
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: "24px"
+      }}>
+        {messages.map(msg => (
+          <div key={msg.id} style={{
+            display: "flex",
+            alignItems: "flex-end",
+            gap: "12px",
+            justifyContent: msg.isBot ? "flex-start" : "flex-end"
+          }}>
+            {msg.isBot && (
+              <div style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "12px",
+                background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "14px",
+                color: "white",
+                flexShrink: 0
+              }}>M</div>
+            )}
+            <div style={{
+              maxWidth: "70%",
+              padding: "18px 24px",
+              borderRadius: msg.isBot ? "20px 20px 20px 6px" : "20px 20px 6px 20px",
+              background: msg.isBot 
+                ? "rgba(255,255,255,0.04)" 
+                : "linear-gradient(135deg, #6366F1, #8B5CF6)",
+              border: msg.isBot ? "1px solid rgba(255,255,255,0.08)" : "none",
+              color: "white",
+              fontSize: "16px",
+              lineHeight: "1.8",
+              whiteSpace: "pre-wrap",
+              boxShadow: msg.isBot 
+                ? "none" 
+                : "0 8px 32px rgba(99,102,241,0.3)"
+            }}>
+              {msg.text}
+            </div>
+            {!msg.isBot && (
+              <div style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "12px",
+                background: "linear-gradient(135deg, #A855F7, #D946EF)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "14px",
+                color: "white",
+                flexShrink: 0
+              }}>أ</div>
+            )}
+          </div>
+        ))}
+        
+        {isLoading && (
+          <div style={{ display: "flex", alignItems: "flex-end", gap: "12px" }}>
+            <div style={{
+              width: "36px",
+              height: "36px",
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "14px",
+              color: "white"
+            }}>M</div>
+            <div style={{
+              padding: "18px 24px",
+              borderRadius: "20px 20px 20px 6px",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              display: "flex",
+              gap: "6px"
+            }}>
+              {[0, 1, 2].map(i => (
+                <span key={i} style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.4)",
+                  animation: `pulse 1.4s infinite ${i * 0.2}s`
+                }} />
+              ))}
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <ChatInputBox onSendMessage={handleSendMessage} loading={isLoading} />
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+      `}</style>
+    </div>
+  );
+
+  // ============ Sidebar ============
+  const Sidebar = () => (
+    <aside style={{
+      width: "280px",
+      background: "rgba(0,0,0,0.6)",
+      backdropFilter: "blur(40px)",
+      borderLeft: "1px solid rgba(255,255,255,0.06)",
+      position: "fixed",
+      right: 0,
+      top: 0,
+      bottom: 0,
+      zIndex: 100,
+      padding: "24px 16px",
+      display: "flex",
+      flexDirection: "column"
+    }}>
+      {/* الشعار */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "14px",
+        padding: "8px 12px",
+        marginBottom: "32px"
+      }}>
+        <div style={{
+          width: "44px",
+          height: "44px",
+          background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+          borderRadius: "14px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "18px",
+          color: "white"
+        }}>M</div>
+        <div>
+          <span style={{ fontSize: "20px", fontWeight: "700", color: "white" }}>Memo</span>
+          <span style={{ display: "block", fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>AI Platform</span>
+        </div>
+      </div>
+
+      {/* القائمة */}
+      <nav style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
+        {menuItems.map(item => (
+          <button
+            key={item.id}
+            onClick={() => setCurrentPage(item.id)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "14px",
+              padding: "14px 16px",
+              background: currentPage === item.id 
+                ? "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1))" 
+                : "transparent",
+              border: currentPage === item.id 
+                ? "1px solid rgba(99,102,241,0.3)" 
+                : "1px solid transparent",
+              borderRadius: "14px",
+              color: currentPage === item.id ? "white" : "rgba(255,255,255,0.5)",
+              fontSize: "15px",
+              fontWeight: currentPage === item.id ? "600" : "500",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              fontFamily: "inherit",
+              textAlign: "right"
+            }}
+          >
+            <span style={{ 
+              fontSize: "18px",
+              width: "28px",
+              height: "28px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: currentPage === item.id ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.05)",
+              borderRadius: "8px"
+            }}>
+              {item.icon}
+            </span>
+            <div style={{ flex: 1 }}>
+              <span style={{ display: "block" }}>{item.label}</span>
+              <span style={{ 
+                display: "block", 
+                fontSize: "11px", 
+                color: "rgba(255,255,255,0.3)",
+                marginTop: "2px"
+              }}>
+                {item.desc}
+              </span>
+            </div>
+          </button>
+        ))}
+      </nav>
+
+      {/* البروفايل */}
+      <div style={{
+        padding: "16px",
+        background: "rgba(255,255,255,0.03)",
+        borderRadius: "16px",
+        border: "1px solid rgba(255,255,255,0.06)"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "12px",
+            background: "linear-gradient(135deg, #A855F7, #D946EF)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "16px",
+            color: "white"
+          }}>👤</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: "600", color: "white", fontSize: "14px" }}>الحساب</div>
+            <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>إعدادات الملف الشخصي</div>
+          </div>
+          <span style={{ color: "rgba(255,255,255,0.3)" }}>›</span>
+        </div>
+      </div>
+    </aside>
+  );
+
+  // ============ صفحات Placeholder ============
+  const PlaceholderPage = ({ title, icon, desc }: { title: string; icon: string; desc: string }) => (
+    <div style={{
+      minHeight: "100vh",
+      background: "#000000",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "40px",
+      textAlign: "center"
+    }}>
+      <div style={{
+        width: "100px",
+        height: "100px",
+        background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1))",
+        borderRadius: "28px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "40px",
+        marginBottom: "28px",
+        border: "1px solid rgba(99,102,241,0.2)"
+      }}>
+        {icon}
+      </div>
+      <h1 style={{ 
+        fontSize: "32px", 
+        fontWeight: "700", 
+        marginBottom: "12px", 
+        color: "white",
+        letterSpacing: "-0.5px"
+      }}>
+        {title}
+      </h1>
+      <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "17px", maxWidth: "400px" }}>
+        {desc}
+      </p>
+      <div style={{
+        marginTop: "32px",
+        padding: "12px 24px",
+        background: "rgba(99,102,241,0.1)",
+        borderRadius: "10px",
+        border: "1px solid rgba(99,102,241,0.2)",
+        color: "rgba(255,255,255,0.6)",
+        fontSize: "14px"
+      }}>
+        قريباً جداً ✨
+      </div>
+    </div>
+  );
+
+  // ============ العرض الرئيسي ============
+  if (currentPage === "home") return <HomePage />;
 
   return (
-    <div className="flex h-screen bg-[#000000] text-white font-cairo dir-rtl overflow-hidden">
-      
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Sidebar Navigation */}
-      <aside className={`fixed md:relative z-50 w-[280px] h-full bg-[#1c1c1e] border-l border-white/5 flex flex-col transition-transform duration-300 
-        ${sidebarOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}`}>
-        
-        <div className="p-8 pb-4">
-          <h1 className="text-3xl font-black text-white tracking-tighter flex items-center gap-2">
-            <span className="text-indigo-500">.</span>ميمو
-          </h1>
-          <p className="text-slate-500 text-[10px] uppercase tracking-widest mt-1 font-bold">المنصة الذكية</p>
-        </div>
-
-        <nav className="flex-1 px-4 space-y-2 overflow-y-auto py-4">
-          <MenuButton icon={Home} label="الرئيسية" isActive={activeTab === 'home'} onClick={() => navTo('home')} colorClass="bg-gradient-to-br from-blue-500 to-cyan-500" />
-          <MenuButton icon={MessageCircle} label="المساعد الذكي" isActive={activeTab === 'chat'} onClick={() => navTo('chat')} colorClass="bg-gradient-to-br from-indigo-500 to-purple-500" />
-          <MenuButton icon={Book} label="الكورسات" isActive={activeTab === 'courses'} onClick={() => navTo('courses')} colorClass="bg-gradient-to-br from-orange-500 to-amber-500" />
-          <MenuButton icon={PenTool} label="الامتحانات" isActive={activeTab === 'exams'} onClick={() => navTo('exams')} colorClass="bg-gradient-to-br from-emerald-500 to-teal-500" />
-          <MenuButton icon={Calendar} label="الجدول" isActive={activeTab === 'planner'} onClick={() => navTo('planner')} colorClass="bg-gradient-to-br from-pink-500 to-rose-500" />
-          <MenuButton icon={Settings} label="الإعدادات" isActive={activeTab === 'settings'} onClick={() => navTo('settings')} colorClass="bg-gradient-to-br from-slate-500 to-slate-700" />
-        </nav>
-
-        <div className="p-6 border-t border-white/5">
-          <div className="bg-[#2c2c2e] rounded-2xl p-4 flex items-center gap-3 border border-white/5">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-bold">M</div>
-            <div>
-              <h4 className="text-sm font-bold text-white">محمد ربيع</h4>
-              <p className="text-[10px] text-indigo-400">طالب متميز</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 h-full relative overflow-hidden bg-[#000000]">
-        
-        {/* Mobile Toggle */}
-        {activeTab !== 'home' && (
-          <button onClick={() => setSidebarOpen(true)} className="md:hidden absolute top-4 left-4 z-30 p-2 bg-[#1c1c1e] rounded-xl text-white shadow-lg border border-white/10">
-            <Menu size={20} />
-          </button>
-        )}
-
-        {/* --- Home Page --- */}
-        {activeTab === 'home' && (
-          <div className="h-full overflow-y-auto">
-            <div className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center overflow-hidden">
-              {/* Animated Background */}
-              <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse"></div>
-              <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px]"></div>
-
-              <div className="relative z-10 max-w-3xl">
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-bold mb-8">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
-                  الجيل القادم من التعليم
-                </span>
-                
-                <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tight leading-[1.1]">
-                  تعليمك <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 animate-gradient">بذكاء المستقبل</span>
-                </h1>
-                
-                <p className="text-lg text-slate-400 mb-10 max-w-lg mx-auto leading-relaxed">
-                  منصة ميمو التعليمية.. حيث يجتمع الذكاء الاصطناعي مع المنهج المصري لتقديم تجربة تعليمية لا مثيل لها.
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                  <button onClick={() => navTo('chat')} className="px-8 py-4 bg-white text-black font-bold rounded-[18px] hover:scale-105 transition-transform shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
-                    ابدأ المحادثة الآن
-                  </button>
-                  <button onClick={() => navTo('courses')} className="px-8 py-4 bg-[#1c1c1e] text-white font-bold rounded-[18px] border border-white/10 hover:bg-[#2c2c2e] transition-colors">
-                    استعراض الكورسات
-                  </button>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <footer className="absolute bottom-6 w-full text-center">
-                <p className="text-[10px] text-slate-600 font-mono tracking-widest opacity-60">
-                  Developed by Mohamed.Rabia19 @2026 294.empire
-                </p>
-              </footer>
-            </div>
-          </div>
-        )}
-
-        {/* --- Chat Page --- */}
-        {activeTab === 'chat' && (
-          <ChatInterface 
-            messages={messages} 
-            input={input} 
-            setInput={setInput} 
-            handleSend={handleSend} 
-            isLoading={isLoading} 
-          />
-        )}
-
-        {/* --- Courses Page --- */}
-        {activeTab === 'courses' && (
-          <div className="h-full overflow-y-auto p-6 md:p-10">
-            <div className="max-w-6xl mx-auto">
-              <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-                <span className="w-1 h-8 bg-indigo-500 rounded-full"></span>
-                أحدث الكورسات
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <CourseCard title="الفيزياء الكهربية" sub="شرح شامل للفصل الأول مع مستر محمد عبد المعبود" color="from-blue-500 to-cyan-500" />
-                <CourseCard title="الكيمياء العضوية" sub="تأسيس من الصفر وحل معادلات صعبة" color="from-emerald-500 to-teal-500" />
-                <CourseCard title="النحو والصرف" sub="مراجعة نهائية لكل قواعد النحو للثانوية" color="from-orange-500 to-amber-500" />
-                <CourseCard title="اللغة الفرنسية" sub="كورس المحادثة والقواعد للمبتدئين" color="from-indigo-500 to-purple-500" />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* --- Placeholders --- */}
-        {['exams', 'quran', 'planner', 'settings'].includes(activeTab) && (
-          <div className="h-full flex flex-col items-center justify-center text-center p-6">
-            <div className="w-24 h-24 rounded-[24px] bg-[#1c1c1e] border border-white/5 flex items-center justify-center text-5xl mb-6 shadow-2xl">
-              🚧
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">جاري العمل على القسم</h2>
-            <p className="text-slate-500">الفريق التقني يضع اللمسات الأخيرة..</p>
-          </div>
-        )}
-
+    <div style={{
+      minHeight: "100vh",
+      background: "#000000",
+      color: "white",
+      direction: "rtl",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    }}>
+      <Sidebar />
+      <main style={{ marginRight: "280px" }}>
+        {currentPage === "chat" && <ChatPage />}
+        {currentPage === "courses" && <PlaceholderPage title="المكتبة الدراسية" icon="▦" desc="كورسات ودروس شاملة لجميع المراحل الدراسية" />}
+        {currentPage === "exams" && <PlaceholderPage title="الاختبارات الذكية" icon="◈" desc="امتحانات تفاعلية تتكيف مع مستواك" />}
+        {currentPage === "quran" && <PlaceholderPage title="القرآن الكريم" icon="❋" desc="نظام متكامل للحفظ والمراجعة" />}
+        {currentPage === "planner" && <PlaceholderPage title="المخطط الدراسي" icon="▤" desc="خطط مذاكرة مخصصة لأهدافك" />}
+        {currentPage === "stats" && <PlaceholderPage title="الإحصائيات" icon="◐" desc="تتبع تقدمك ومستوى أدائك" />}
+        {currentPage === "settings" && <PlaceholderPage title="الإعدادات" icon="⚙" desc="تخصيص تجربة التطبيق" />}
       </main>
     </div>
   );
-};
+}
 
 export default App;

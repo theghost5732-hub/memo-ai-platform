@@ -96,7 +96,7 @@ function App() {
 
     try {
       const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyA1BNXdW6Wa-RLXG7WtXOzXSR2PtPddE94",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyA1BNXdW6Wa-RLXG7WtXOzXSR2PtPddE94-RLXG7WtXOzXSR2PtPddE94",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

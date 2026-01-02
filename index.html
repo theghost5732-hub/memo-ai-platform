@@ -3,36 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ميمو - التعليم الذكي</title>
-    <!-- استدعاء خط Cairo -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <!-- استدعاء Tailwind -->
+    <title>ميمو - المستقبل</title>
+    <!-- خط كايرو -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Tailwind Engine -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
-            colors: {
-              primary: '#8b5cf6',
-              secondary: '#ec4899',
-              dark: '#0f172a',
-              darker: '#020617',
-              surface: '#1e293b'
-            },
             fontFamily: {
               cairo: ['Cairo', 'sans-serif'],
+            },
+            animation: {
+              'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+              'bounce': 'bounce 1s infinite',
+            },
+            keyframes: {
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
             }
           }
         }
       }
     </script>
     <style>
-      body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: white; }
-      /* شريط تمرير شيك */
-      ::-webkit-scrollbar { width: 8px; }
-      ::-webkit-scrollbar-track { background: #0f172a; }
-      ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: #475569; }
+      body { background-color: #020617; font-family: 'Cairo', sans-serif; }
     </style>
   </head>
   <body>

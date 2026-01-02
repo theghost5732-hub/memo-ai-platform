@@ -1,476 +1,319 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-// ============ مكون الشات منفصل (ده اللي بيحل المشكلة) ============
-const ChatInput = ({ onSend, isLoading }: { onSend: (text: string) => void; isLoading: boolean }) => {
-  const [text, setText] = useState("");
+// ==========================================
+// 1. المكونات الفرعية (مفصولة عشان السرعة)
+// ==========================================
 
-  const handleSubmit = () => {
-    if (text.trim() && !isLoading) {
-      onSend(text);
-      setText("");
-    }
-  };
+// زرار القائمة الجانبية
+const SidebarItem = ({ icon, label, id, active, onClick }: any) => (
+  <button
+    onClick={() => onClick(id)}
+    className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group font-cairo
+    ${active 
+      ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/25 border border-white/10" 
+      : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
+  >
+    <span className="text-2xl group-hover:scale-110 transition-transform">{icon}</span>
+    <span className="font-bold text-sm md:text-base">{label}</span>
+  </button>
+);
 
-  return (
-    <div style={{
-      padding: "20px 24px",
-      background: "rgba(15, 23, 42, 0.95)",
-      backdropFilter: "blur(20px)",
-      borderTop: "1px solid rgba(139, 92, 246, 0.2)",
-      display: "flex",
-      gap: "12px"
-    }}>
-      <input
-        type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-        placeholder="اكتب سؤالك هنا... 💬"
-        disabled={isLoading}
-        style={{
-          flex: 1,
-          padding: "18px 24px",
-          background: "rgba(30, 41, 59, 0.8)",
-          border: "2px solid rgba(139, 92, 246, 0.3)",
-          borderRadius: "16px",
-          color: "white",
-          fontSize: "16px",
-          outline: "none",
-          fontFamily: "inherit",
-          transition: "all 0.3s ease"
-        }}
-      />
-      <button
-        onClick={handleSubmit}
-        disabled={isLoading || !text.trim()}
-        style={{
-          padding: "18px 36px",
-          background: isLoading || !text.trim()
-            ? "rgba(107, 114, 128, 0.5)"
-            : "linear-gradient(135deg, #8B5CF6, #EC4899)",
-          border: "none",
-          borderRadius: "16px",
-          color: "white",
-          fontSize: "16px",
-          fontWeight: "700",
-          cursor: isLoading || !text.trim() ? "not-allowed" : "pointer",
-          fontFamily: "inherit",
-          boxShadow: isLoading || !text.trim() ? "none" : "0 8px 32px rgba(139, 92, 246, 0.4)",
-          transition: "all 0.3s ease"
-        }}
-      >
-        {isLoading ? "⏳" : "إرسال 🚀"}
-      </button>
-    </div>
-  );
-};
-
-// ============ التطبيق الرئيسي ============
-const App = () => {
-  const [currentPage, setCurrentPage] = useState("home");
-  const [messages, setMessages] = useState<{id: number; text: string; isBot: boolean}[]>([
-    { id: 1, text: "أهلاً بيك يا بطل! 👋 أنا ميمو، مدرسك الخصوصي بالذكاء الاصطناعي. اسألني أي سؤال في أي مادة وأنا جاهز أساعدك! 🎓", isBot: true }
-  ]);
-  const [isLoading, setIsLoading] = useState(false);
+// صفحة الشات (الذكية)
+const ChatPage = ({ messages, input, setInput, sendMessage, isLoading }: any) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = async (userText: string) => {
-    const newUserMessage = { id: Date.now(), text: userText, isBot: false };
-    setMessages(prev => [...prev, newUserMessage]);
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBpvU_qU7ocojaPCh3hPY4mLmgnHNezTOs",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `أنت "ميمو" - مدرس مصري ودود وذكي ومرح. رد دايماً باللهجة المصرية العامية بطريقة بسيطة ومفهومة وشجع الطالب. لو حد سألك مين عملك قول "المهندس محمد ربيع". السؤال: ${userText}`
-              }]
-            }]
-          })
-        }
-      );
-
-      const data = await response.json();
-      const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "معلش مفهمتش السؤال، ممكن تقوله تاني بطريقة تانية؟ 🤔";
-      
-      setMessages(prev => [...prev, { id: Date.now() + 1, text: aiText, isBot: true }]);
-    } catch (error) {
-      console.error("Error:", error);
-      setMessages(prev => [...prev, { id: Date.now() + 1, text: "في مشكلة في الاتصال، جرب تاني كمان شوية! 🔄", isBot: true }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const menuItems = [
-    { id: "home", icon: "🏠", label: "الرئيسية", color: "#8B5CF6" },
-    { id: "chat", icon: "💬", label: "المساعد الذكي", color: "#EC4899" },
-    { id: "courses", icon: "📚", label: "الكورسات", color: "#3B82F6" },
-    { id: "exams", icon: "📝", label: "الامتحانات", color: "#10B981" },
-    { id: "quran", icon: "📖", label: "القرآن الكريم", color: "#059669" },
-    { id: "planner", icon: "📅", label: "جدول المذاكرة", color: "#F59E0B" },
-    { id: "settings", icon: "⚙️", label: "الإعدادات", color: "#6B7280" },
-  ];
-
-  // ============ الصفحة الرئيسية ============
-  const HomePage = () => (
-    <div style={{
-      minHeight: "100vh",
-      background: "linear-gradient(135deg, #0a0a0f 0%, #1a1025 25%, #0f1729 50%, #1a1025 75%, #0a0a0f 100%)",
-      position: "relative",
-      overflow: "hidden"
-    }}>
-      {/* الخلفيات المتوهجة */}
-      <div style={{
-        position: "absolute", top: "5%", left: "15%", width: "500px", height: "500px",
-        background: "radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, transparent 70%)",
-        borderRadius: "50%", filter: "blur(80px)", animation: "pulse 4s ease-in-out infinite"
-      }} />
-      <div style={{
-        position: "absolute", bottom: "10%", right: "10%", width: "400px", height: "400px",
-        background: "radial-gradient(circle, rgba(236, 72, 153, 0.35) 0%, transparent 70%)",
-        borderRadius: "50%", filter: "blur(80px)", animation: "pulse 5s ease-in-out infinite"
-      }} />
-      <div style={{
-        position: "absolute", top: "50%", left: "50%", width: "300px", height: "300px",
-        background: "radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%)",
-        borderRadius: "50%", filter: "blur(60px)", transform: "translate(-50%, -50%)"
-      }} />
-
-      {/* الهيدر */}
-      <nav style={{
-        padding: "28px 48px", display: "flex", justifyContent: "space-between", alignItems: "center",
-        position: "relative", zIndex: 10
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <div style={{
-            width: "56px", height: "56px",
-            background: "linear-gradient(135deg, #8B5CF6, #EC4899, #F59E0B)",
-            borderRadius: "18px", display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "28px", boxShadow: "0 12px 40px rgba(139, 92, 246, 0.5)",
-            animation: "float 3s ease-in-out infinite"
-          }}>🎓</div>
-          <span style={{
-            fontSize: "36px", fontWeight: "900",
-            background: "linear-gradient(135deg, #8B5CF6, #EC4899, #F59E0B)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
-          }}>ميمو</span>
-        </div>
-        <button onClick={() => setCurrentPage("chat")} style={{
-          padding: "16px 36px",
-          background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
-          border: "none", borderRadius: "14px", color: "white",
-          fontSize: "17px", fontWeight: "700", cursor: "pointer",
-          boxShadow: "0 12px 40px rgba(139, 92, 246, 0.5)",
-          transition: "all 0.3s ease", fontFamily: "inherit"
-        }}>ابدأ المذاكرة 🚀</button>
-      </nav>
-
-      {/* المحتوى الرئيسي */}
-      <main style={{ textAlign: "center", padding: "100px 24px", position: "relative", zIndex: 10 }}>
-        <div style={{
-          display: "inline-flex", alignItems: "center", gap: "10px",
-          padding: "12px 28px", background: "rgba(139, 92, 246, 0.2)",
-          border: "1px solid rgba(139, 92, 246, 0.4)", borderRadius: "50px",
-          marginBottom: "40px", backdropFilter: "blur(10px)"
-        }}>
-          <span style={{ fontSize: "18px" }}>✨</span>
-          <span style={{ color: "#DDD6FE", fontSize: "15px", fontWeight: "600" }}>
-            أول منصة تعليمية بالذكاء الاصطناعي في مصر 🇪🇬
-          </span>
-        </div>
-
-        <h1 style={{
-          fontSize: "clamp(48px, 10vw, 84px)", fontWeight: "900",
-          lineHeight: "1.1", marginBottom: "28px", color: "white"
-        }}>
-          مدرسك الخصوصي<br />
-          <span style={{
-            background: "linear-gradient(135deg, #8B5CF6, #EC4899, #F59E0B, #8B5CF6)",
-            backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            animation: "gradient 5s ease infinite"
-          }}>بالذكاء الاصطناعي</span>
-        </h1>
-
-        <p style={{
-          fontSize: "22px", color: "#A5B4FC", maxWidth: "650px",
-          margin: "0 auto 56px", lineHeight: "1.9"
-        }}>
-          ميمو بيفهمك، بيشرحلك بالمصري، وبيساعدك تجيب أعلى الدرجات!<br />
-          <strong style={{ color: "#C4B5FD" }}>متاح 24 ساعة × 7 أيام مجاناً! 🎉</strong>
-        </p>
-
-        <button onClick={() => setCurrentPage("chat")} style={{
-          padding: "24px 56px", fontSize: "24px", fontWeight: "800",
-          background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
-          border: "none", borderRadius: "20px", color: "white", cursor: "pointer",
-          boxShadow: "0 20px 60px rgba(139, 92, 246, 0.6)",
-          transition: "all 0.3s ease", fontFamily: "inherit"
-        }}>ابدأ رحلتك مجاناً 🚀</button>
-
-        {/* الإحصائيات */}
-        <div style={{
-          display: "flex", justifyContent: "center", gap: "60px",
-          marginTop: "80px", flexWrap: "wrap"
-        }}>
-          {[
-            { number: "+50,000", label: "طالب سعيد 😊" },
-            { number: "4.9 ⭐", label: "تقييم المستخدمين" },
-            { number: "98%", label: "نسبة النجاح 🎯" }
-          ].map((stat, i) => (
-            <div key={i} style={{ textAlign: "center" }}>
-              <div style={{
-                fontSize: "40px", fontWeight: "900",
-                background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
-              }}>{stat.number}</div>
-              <div style={{ color: "#94A3B8", fontSize: "15px", marginTop: "8px" }}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* المميزات */}
-        <div style={{
-          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "28px", maxWidth: "1100px", margin: "100px auto 0", padding: "0 20px"
-        }}>
-          {[
-            { icon: "🧠", title: "ذكاء اصطناعي فائق", desc: "بيفهم العامية المصرية ويرد عليك زي المدرس الحقيقي بالظبط!", color: "#8B5CF6" },
-            { icon: "📚", title: "المنهج المصري كامل", desc: "من KG لحد ثانوية عامة، كل المواد والدروس متاحة ومحدثة.", color: "#3B82F6" },
-            { icon: "🎯", title: "امتحانات ذكية", desc: "بيعملك امتحانات على مستواك ويصححها فوراً ويقولك غلطت فين.", color: "#10B981" },
-            { icon: "📖", title: "تحفيظ القرآن", desc: "نظام متكامل لحفظ القرآن الكريم مع متابعة وتصحيح.", color: "#059669" },
-            { icon: "📅", title: "جدول مذاكرة ذكي", desc: "بيعملك خطة مذاكرة مخصصة على حسب وقتك ومستواك.", color: "#F59E0B" },
-            { icon: "💬", title: "دعم نفسي", desc: "لو حاسس بضغط أو قلق، ميمو موجود يسمعك ويساعدك!", color: "#EC4899" }
-          ].map((f, i) => (
-            <div key={i} style={{
-              background: "rgba(30, 41, 59, 0.7)", backdropFilter: "blur(20px)",
-              padding: "36px", borderRadius: "28px",
-              border: "1px solid rgba(255, 255, 255, 0.15)",
-              transition: "all 0.4s ease", cursor: "pointer"
-            }}>
-              <div style={{
-                width: "72px", height: "72px",
-                background: `linear-gradient(135deg, ${f.color}50, ${f.color}25)`,
-                borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "36px", marginBottom: "24px", boxShadow: `0 8px 32px ${f.color}30`
-              }}>{f.icon}</div>
-              <h3 style={{ fontSize: "22px", fontWeight: "700", marginBottom: "14px", color: "white" }}>{f.title}</h3>
-              <p style={{ color: "#A5B4FC", fontSize: "16px", lineHeight: "1.8" }}>{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </main>
-
-      <footer style={{
-        textAlign: "center", padding: "40px", borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-        marginTop: "100px", position: "relative", zIndex: 10
-      }}>
-        <p style={{ color: "#64748B", fontSize: "15px" }}>
-          © 2024 ميمو - صنع بكل ❤️ بواسطة المهندس محمد ربيع
-        </p>
-      </footer>
-
-      <style>{`
-        @keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 0.4; } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        @keyframes gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-      `}</style>
-    </div>
-  );
-
-  // ============ صفحة الشات ============
-  const ChatPage = () => (
-    <div style={{
-      display: "flex", flexDirection: "column", height: "100vh",
-      background: "linear-gradient(180deg, #0a0a0f 0%, #1a1025 50%, #0f1729 100%)"
-    }}>
-      <div style={{
-        padding: "24px 28px", background: "rgba(15, 23, 42, 0.95)",
-        backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(139, 92, 246, 0.3)",
-        display: "flex", alignItems: "center", gap: "18px"
-      }}>
-        <div style={{
-          width: "56px", height: "56px",
-          background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
-          borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "28px", boxShadow: "0 8px 32px rgba(139, 92, 246, 0.5)"
-        }}>🤖</div>
+  return (
+    <div className="flex flex-col h-screen bg-[#020617]">
+      {/* هيدر الشات */}
+      <div className="p-4 bg-[#1e293b]/50 backdrop-blur-md border-b border-white/5 flex items-center gap-3 sticky top-0 z-10">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 flex items-center justify-center text-xl shadow-lg">🤖</div>
         <div>
-          <h2 style={{ fontSize: "20px", fontWeight: "700", color: "white", margin: 0 }}>ميمو - المساعد الذكي</h2>
-          <p style={{
-            fontSize: "14px", margin: 0, color: isLoading ? "#FBBF24" : "#4ADE80",
-            display: "flex", alignItems: "center", gap: "8px"
-          }}>
-            <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: isLoading ? "#FBBF24" : "#4ADE80" }} />
-            {isLoading ? "بيفكر في الإجابة... 🤔" : "متصل ومستنيك! 💚"}
+          <h3 className="font-bold text-white">المساعد ميمو</h3>
+          <p className="text-xs text-green-400 flex items-center gap-1">
+            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> متصل الآن
           </p>
         </div>
       </div>
 
-      <div style={{ flex: 1, padding: "28px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "24px" }}>
-        {messages.map((msg) => (
-          <div key={msg.id} style={{ display: "flex", alignItems: "flex-start", gap: "14px", justifyContent: msg.isBot ? "flex-start" : "flex-end" }}>
-            {msg.isBot && (
-              <div style={{
-                width: "44px", height: "44px", borderRadius: "50%",
-                background: "linear-gradient(135deg, #3B82F6, #8B5CF6)",
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0
-              }}>🤖</div>
-            )}
-            <div style={{
-              maxWidth: "75%", padding: "18px 24px",
-              borderRadius: msg.isBot ? "24px 24px 24px 6px" : "24px 24px 6px 24px",
-              background: msg.isBot
-                ? "linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(30, 41, 59, 0.8))"
-                : "linear-gradient(135deg, #8B5CF6, #EC4899)",
-              color: "white", fontSize: "16px", lineHeight: "1.9",
-              boxShadow: msg.isBot ? "0 6px 24px rgba(0, 0, 0, 0.3)" : "0 6px 24px rgba(139, 92, 246, 0.4)",
-              border: msg.isBot ? "1px solid rgba(139, 92, 246, 0.2)" : "none", whiteSpace: "pre-wrap"
-            }}>{msg.text}</div>
-            {!msg.isBot && (
-              <div style={{
-                width: "44px", height: "44px", borderRadius: "50%",
-                background: "linear-gradient(135deg, #EC4899, #F59E0B)",
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0
-              }}>👤</div>
-            )}
+      {/* منطقة الرسائل */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {messages.map((msg: any) => (
+          <div key={msg.id} className={`flex items-start gap-3 ${msg.isBot ? "flex-row" : "flex-row-reverse"}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border border-white/10
+              ${msg.isBot ? "bg-[#1e293b]" : "bg-violet-600"}`}>
+              {msg.isBot ? "🤖" : "👤"}
+            </div>
+            
+            <div className={`max-w-[85%] p-4 rounded-2xl text-base leading-relaxed shadow-lg backdrop-blur-sm
+              ${msg.isBot 
+                ? "bg-[#1e293b]/80 border border-white/5 text-slate-200 rounded-tl-none" 
+                : "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-tr-none"}`}>
+              {msg.text}
+            </div>
           </div>
         ))}
         {isLoading && (
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <div style={{
-              width: "44px", height: "44px", borderRadius: "50%",
-              background: "linear-gradient(135deg, #3B82F6, #8B5CF6)",
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px"
-            }}>🤖</div>
-            <div style={{
-              padding: "18px 28px", borderRadius: "24px 24px 24px 6px",
-              background: "rgba(30, 41, 59, 0.9)", border: "1px solid rgba(139, 92, 246, 0.2)"
-            }}>
-              <div style={{ display: "flex", gap: "8px" }}>
-                {[0, 1, 2].map(i => (
-                  <span key={i} style={{
-                    width: "12px", height: "12px", borderRadius: "50%",
-                    background: ["#8B5CF6", "#EC4899", "#F59E0B"][i],
-                    animation: `bounce 1s infinite ${i * 0.2}s`
-                  }} />
-                ))}
-              </div>
-            </div>
+          <div className="flex items-center gap-2 text-slate-500 mr-12 text-sm">
+             ميمو بيكتب...
+             <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce"></span>
+             <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce delay-100"></span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <ChatInput onSend={sendMessage} isLoading={isLoading} />
-
-      <style>{`@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }`}</style>
-    </div>
-  );
-
-  // ============ القائمة الجانبية ============
-  const Sidebar = () => (
-    <aside style={{
-      width: "300px", background: "linear-gradient(180deg, rgba(10, 10, 15, 0.98) 0%, rgba(26, 16, 37, 0.98) 100%)",
-      backdropFilter: "blur(24px)", borderLeft: "1px solid rgba(139, 92, 246, 0.2)",
-      position: "fixed", right: 0, top: 0, bottom: 0, zIndex: 100,
-      padding: "28px 20px", display: "flex", flexDirection: "column"
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "48px", paddingRight: "10px" }}>
-        <div style={{
-          width: "52px", height: "52px", background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
-          borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "24px", boxShadow: "0 8px 32px rgba(139, 92, 246, 0.4)"
-        }}>🎓</div>
-        <span style={{
-          fontSize: "28px", fontWeight: "900",
-          background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
-          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
-        }}>ميمو</span>
-      </div>
-
-      <nav style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1 }}>
-        {menuItems.map((item) => (
-          <button key={item.id} onClick={() => setCurrentPage(item.id)} style={{
-            display: "flex", alignItems: "center", gap: "16px", padding: "16px 18px",
-            background: currentPage === item.id ? `linear-gradient(135deg, ${item.color}40, ${item.color}20)` : "transparent",
-            border: currentPage === item.id ? `2px solid ${item.color}60` : "2px solid transparent",
-            borderRadius: "14px", color: currentPage === item.id ? "white" : "#A5B4FC",
-            fontSize: "16px", fontWeight: currentPage === item.id ? "700" : "500",
-            cursor: "pointer", transition: "all 0.3s ease", fontFamily: "inherit", textAlign: "right"
-          }}>
-            <span style={{ fontSize: "22px" }}>{item.icon}</span>
-            <span>{item.label}</span>
+      {/* منطقة الكتابة */}
+      <div className="p-4 bg-[#020617] border-t border-white/5">
+        <div className="flex gap-2 max-w-4xl mx-auto">
+          <input 
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            placeholder="اسأل ميمو في المنهج..."
+            className="flex-1 bg-[#1e293b] text-white px-5 py-4 rounded-xl border border-white/5 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all placeholder:text-slate-600 font-cairo"
+            disabled={isLoading}
+            autoFocus
+          />
+          <button 
+            onClick={sendMessage}
+            disabled={isLoading || !input.trim()}
+            className="bg-violet-600 hover:bg-violet-700 text-white px-6 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            🚀
           </button>
-        ))}
-      </nav>
-
-      <div style={{
-        padding: "20px", background: "rgba(139, 92, 246, 0.15)",
-        borderRadius: "16px", border: "1px solid rgba(139, 92, 246, 0.3)"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{
-            width: "48px", height: "48px", borderRadius: "50%",
-            background: "linear-gradient(135deg, #EC4899, #F59E0B)",
-            display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px"
-          }}>👨‍🎓</div>
-          <div>
-            <div style={{ fontWeight: "700", color: "white" }}>محمد ربيع</div>
-            <div style={{ color: "#A5B4FC", fontSize: "13px" }}>المؤسس والمطور 🚀</div>
-          </div>
         </div>
       </div>
-    </aside>
-  );
-
-  // ============ صفحات Placeholder ============
-  const PlaceholderPage = ({ title, icon, desc }: { title: string; icon: string; desc: string }) => (
-    <div style={{
-      minHeight: "100vh", background: "linear-gradient(180deg, #0a0a0f 0%, #1a1025 100%)",
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px"
-    }}>
-      <div style={{
-        width: "120px", height: "120px", background: "linear-gradient(135deg, #8B5CF640, #EC489940)",
-        borderRadius: "32px", display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "56px", marginBottom: "32px", boxShadow: "0 16px 48px rgba(139, 92, 246, 0.3)"
-      }}>{icon}</div>
-      <h1 style={{ fontSize: "36px", fontWeight: "800", marginBottom: "16px", color: "white" }}>{title}</h1>
-      <p style={{ color: "#A5B4FC", fontSize: "20px", textAlign: "center", maxWidth: "400px" }}>{desc}</p>
-      <div style={{
-        marginTop: "40px", padding: "16px 32px", background: "rgba(139, 92, 246, 0.2)",
-        borderRadius: "12px", border: "1px solid rgba(139, 92, 246, 0.3)"
-      }}>
-        <span style={{ color: "#DDD6FE" }}>🚀 جاري التطوير - قريباً جداً!</span>
-      </div>
     </div>
   );
+};
 
-  // ============ العرض الرئيسي ============
-  if (currentPage === "home") return <HomePage />;
+// صفحة الكورسات
+const CoursesPage = () => (
+  <div className="p-6 md:p-8 animate-fade-in pb-20">
+    <h2 className="text-3xl font-black text-white mb-8 border-r-4 border-violet-500 pr-4">📚 المواد الدراسية</h2>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[
+        { title: "الفيزياء الحديثة", level: "3 ثانوي", color: "from-blue-500 to-cyan-500" },
+        { title: "الكيمياء العضوية", level: "3 ثانوي", color: "from-emerald-500 to-teal-500" },
+        { title: "اللغة العربية", level: "عام", color: "from-orange-500 to-amber-500" }
+      ].map((course, i) => (
+        <div key={i} className="bg-[#1e293b]/50 border border-white/5 rounded-2xl overflow-hidden group hover:border-violet-500/50 transition-all hover:-translate-y-1">
+          <div className={`h-40 bg-gradient-to-br ${course.color} relative overflow-hidden`}>
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
+            <span className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg text-xs text-white border border-white/10">{course.level}</span>
+          </div>
+          <div className="p-5">
+            <h3 className="text-xl font-bold text-white mb-2">{course.title}</h3>
+            <p className="text-slate-400 text-sm mb-4">شرح وافي للمنهج مع حل تدريبات وامتحانات سابقة.</p>
+            <button className="w-full py-3 rounded-xl bg-white/5 hover:bg-violet-600 text-white font-bold transition-all border border-white/5">
+              ابدأ المذاكرة
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// صفحة بليس هولدر (للأقسام اللي لسه بتتعمل)
+const PlaceholderPage = ({ title, icon }: any) => (
+  <div className="h-screen flex flex-col items-center justify-center text-center p-6">
+    <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center text-6xl mb-6 border border-white/10 backdrop-blur-md">
+      {icon}
+    </div>
+    <h2 className="text-3xl font-bold text-white mb-2">{title}</h2>
+    <p className="text-slate-400">المهندسين شغالين على القسم ده.. انتظرونا! 🚧</p>
+  </div>
+);
+
+// ==========================================
+// 2. التطبيق الرئيسي (Logic & Layout)
+// ==========================================
+
+const App = () => {
+  const [currentPage, setCurrentPage] = useState("home");
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Chat State
+  const [messages, setMessages] = useState([
+    { id: 1, text: "أهلاً يا بطل! 👋 أنا ميمو.. جاهز أساعدك في أي مادة!", isBot: true }
+  ]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // دالة الإرسال (الذكية)
+  const sendMessage = async () => {
+    if (!input.trim() || isLoading) return;
+    const userInput = input;
+    
+    setMessages(prev => [...prev, { id: Date.now(), text: userInput, isBot: false }]);
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      // ✅ المفتاح مدمج هنا
+      const apiKey = "AIzaSyBpvU_qU7ocojaPCh3hPY4mLmgnHNezTOs";
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `رد باللهجة المصرية العامية كأنك مدرس خصوصي شاطر: ${userInput}` }] }]
+          })
+        }
+      );
+
+      const data = await response.json();
+      const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "معلش الشبكة قطعت.. قول تاني؟";
+      
+      setMessages(prev => [...prev, { id: Date.now() + 1, text: aiReply, isBot: true }]);
+    } catch (e) {
+      setMessages(prev => [...prev, { id: Date.now() + 1, text: "مشكلة في الاتصال.. جرب تاني!", isBot: true }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const navigate = (page: string) => {
+    setCurrentPage(page);
+    setSidebarOpen(false); // اقفل القائمة في الموبايل لما تختار
+  };
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "#0a0a0f", color: "white",
-      direction: "rtl", fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-    }}>
-      <Sidebar />
-      <main style={{ marginRight: "300px" }}>
-        {currentPage === "chat" && <ChatPage />}
-        {currentPage === "courses" && <PlaceholderPage title="مكتبة الكورسات" icon="📚" desc="كورسات شاملة لكل المواد الدراسية من أفضل المدرسين!" />}
-        {currentPage === "exams" && <PlaceholderPage title="الامتحانات الذكية" icon="📝" desc="امتحانات تفاعلية بتتكيف مع مستواك وبتصحح فوراً!" />}
-        {currentPage === "quran" && <PlaceholderPage title="تحفيظ القرآن" icon="📖" desc="نظام متكامل لحفظ ومراجعة القرآن الكريم!" />}
-        {currentPage === "planner" && <PlaceholderPage title="جدول المذاكرة" icon="📅" desc="خطط مذاكرة ذكية مخصصة ليك على حسب وقتك!" />}
-        {currentPage === "settings" && <PlaceholderPage title="الإعدادات" icon="⚙️" desc="تحكم في حسابك وإعدادات المنصة!" />}
+    <div className="min-h-screen bg-[#020617] text-white font-cairo dir-rtl flex overflow-hidden selection:bg-violet-500 selection:text-white">
+      
+      {/* Sidebar */}
+      {currentPage !== 'home' && (
+        <>
+          {/* Overlay for mobile */}
+          {isSidebarOpen && <div className="fixed inset-0 bg-black/80 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />}
+          
+          <aside className={`fixed md:relative z-50 w-72 bg-[#0f172a] border-l border-white/5 h-full flex flex-col transition-transform duration-300 shadow-2xl ${isSidebarOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}`}>
+            <div className="p-8 text-center border-b border-white/5">
+              <h1 className="text-4xl font-black bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent filter drop-shadow-lg">ميمو 🎓</h1>
+            </div>
+            
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+              <SidebarItem id="home" icon="🏠" label="الرئيسية" active={currentPage === 'home'} onClick={navigate} />
+              <SidebarItem id="chat" icon="🤖" label="المساعد الذكي" active={currentPage === 'chat'} onClick={navigate} />
+              <SidebarItem id="courses" icon="📚" label="الكورسات" active={currentPage === 'courses'} onClick={navigate} />
+              <SidebarItem id="exams" icon="📝" label="الامتحانات" active={currentPage === 'exams'} onClick={navigate} />
+              <SidebarItem id="quran" icon="📖" label="القرآن الكريم" active={currentPage === 'quran'} onClick={navigate} />
+              <SidebarItem id="planner" icon="📅" label="الجدول" active={currentPage === 'planner'} onClick={navigate} />
+            </nav>
+
+            <div className="p-4 border-t border-white/5">
+               <div className="bg-[#1e293b] rounded-xl p-3 flex items-center gap-3 border border-white/5">
+                 <div className="w-10 h-10 rounded-full bg-violet-600 flex items-center justify-center text-lg">👨‍🎓</div>
+                 <div>
+                   <h4 className="font-bold text-sm text-white">طالب متميز</h4>
+                   <p className="text-slate-400 text-xs">الباقة المجانية</p>
+                 </div>
+               </div>
+            </div>
+          </aside>
+        </>
+      )}
+
+      {/* Main Content */}
+      <main className="flex-1 h-screen overflow-y-auto relative bg-[#020617] scroll-smooth">
+        
+        {/* زرار القائمة للموبايل */}
+        {currentPage !== 'home' && (
+          <button 
+            onClick={() => setSidebarOpen(true)} 
+            className="md:hidden absolute top-4 left-4 z-40 p-3 bg-[#1e293b] rounded-xl border border-white/10 text-white shadow-lg active:scale-95 transition-transform"
+          >
+            ☰
+          </button>
+        )}
+
+        {/* الصفحة الرئيسية (Landing Page) */}
+        {currentPage === 'home' && (
+          <div className="min-h-screen flex flex-col items-center justify-center text-center p-6 relative overflow-hidden">
+            {/* خلفية متحركة */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-violet-600/20 rounded-full blur-[120px] animate-pulse"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-fuchsia-600/10 rounded-full blur-[120px]"></div>
+            </div>
+
+            <div className="relative z-10 max-w-4xl animate-fade-in-up">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-violet-300 text-sm mb-8 backdrop-blur-md shadow-lg">
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                أذكى منصة تعليمية في مصر 🇪🇬
+              </div>
+              
+              <h1 className="text-5xl md:text-8xl font-black mb-8 leading-tight tracking-tight">
+                مدرسك <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 animate-gradient">الخصوصي</span>
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto">
+                انسى الدروس الخصوصية ومصاريفها. ميمو معاك 24 ساعة، بيشرح، بيحل، وبيعملك امتحانات.. وكل ده ببلاش!
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-5 justify-center">
+                <button 
+                  onClick={() => navigate('chat')}
+                  className="px-10 py-5 bg-white text-[#020617] font-bold text-xl rounded-2xl hover:scale-105 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] transition-all shadow-xl"
+                >
+                  جرب الشات دلوقتي ⚡
+                </button>
+                <button 
+                  onClick={() => navigate('courses')}
+                  className="px-10 py-5 bg-[#1e293b]/50 text-white font-bold text-xl rounded-2xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all backdrop-blur-md"
+                >
+                  استكشف المواد
+                </button>
+              </div>
+
+              {/* المميزات السريعة */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 text-right">
+                 {[
+                   { icon: "🧠", title: "ذكاء خارق", desc: "بيفهم كلامك بالعامية ويرد عليك." },
+                   { icon: "📚", title: "مناهج مصرية", desc: "محتوى مطابق لمنهج الوزارة." },
+                   { icon: "💸", title: "مجاني تماماً", desc: "تعليم بجودة عالمية للكل." }
+                 ].map((feat, i) => (
+                   <div key={i} className="p-6 rounded-2xl bg-[#1e293b]/30 border border-white/5 hover:bg-[#1e293b]/50 transition-colors backdrop-blur-sm">
+                     <div className="text-4xl mb-4">{feat.icon}</div>
+                     <h3 className="text-xl font-bold mb-2">{feat.title}</h3>
+                     <p className="text-slate-400">{feat.desc}</p>
+                   </div>
+                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* الصفحات */}
+        {currentPage === 'chat' && (
+          <ChatPage 
+            messages={messages} 
+            input={input} 
+            setInput={setInput} 
+            sendMessage={sendMessage} 
+            isLoading={isLoading} 
+          />
+        )}
+
+        {currentPage === 'courses' && <CoursesPage />}
+        {['exams', 'quran', 'planner', 'settings'].includes(currentPage) && (
+           <PlaceholderPage title={
+             currentPage === 'exams' ? "الامتحانات" : 
+             currentPage === 'quran' ? "القرآن الكريم" :
+             currentPage === 'planner' ? "جدول المذاكرة" : "الإعدادات"
+           } icon={
+             currentPage === 'exams' ? "📝" : 
+             currentPage === 'quran' ? "📖" :
+             currentPage === 'planner' ? "📅" : "⚙️"
+           } />
+        )}
       </main>
     </div>
   );

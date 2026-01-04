@@ -26,8 +26,7 @@ const SYSTEM_PROMPT = `أنت "ميمو" - أقوى مساعد تعليمي مص
 ## قواعد:
 - لو سألوك مين عملك: "المهندس محمد ربيع"
 - لو سألوك أنت ChatGPT أو Gemini: "لا، أنا ميمو - منصة مصرية مستقلة"
-- راجع إجابتك قبل ما ترد
-- لو مش متأكد، قول "مش متأكد 100% بس..."`;
+- راجع إجابتك قبل ما ترد`;
 
 // ============ Multi-Model AI System ============
 const callGroq = async (message: string): Promise<string> => {
@@ -38,7 +37,7 @@ const callGroq = async (message: string): Promise<string> => {
       "Authorization": `Bearer ${API_KEYS.groq}`
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model: "llama3-70b-8192", // ✅ التعديل: الاسم الرسمي المستقر
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: message }
@@ -47,6 +46,7 @@ const callGroq = async (message: string): Promise<string> => {
       max_tokens: 2048
     })
   });
+  if (!response.ok) throw new Error("Groq Failed");
   const data = await response.json();
   return data.choices?.[0]?.message?.content || "";
 };
@@ -57,7 +57,7 @@ const callOpenRouter = async (message: string): Promise<string> => {
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${API_KEYS.openrouter}`,
-      "HTTP-Referer": window.location.origin,
+      "HTTP-Referer": "https://memo-ai.app", // ✅ وهمي عشان يعدي
       "X-Title": "Memo AI"
     },
     body: JSON.stringify({
@@ -68,6 +68,7 @@ const callOpenRouter = async (message: string): Promise<string> => {
       ]
     })
   });
+  if (!response.ok) throw new Error("OpenRouter Failed");
   const data = await response.json();
   return data.choices?.[0]?.message?.content || "";
 };
@@ -83,6 +84,7 @@ const callGemini = async (message: string): Promise<string> => {
       })
     }
   );
+  if (!response.ok) throw new Error("Gemini Failed");
   const data = await response.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 };
@@ -102,31 +104,34 @@ const callOpenAI = async (message: string): Promise<string> => {
       ]
     })
   });
+  if (!response.ok) throw new Error("OpenAI Failed");
   const data = await response.json();
   return data.choices?.[0]?.message?.content || "";
 };
 
-// ============ Smart Router ============
+// ============ Smart Router (العقل المدبر) ============
 const getAIResponse = async (message: string): Promise<{ text: string; model: string }> => {
+  // الترتيب الذكي: الأسرع -> الأذكى -> الاحتياطي
   const models = [
-    { name: "Groq (Llama)", fn: callGroq },
-    { name: "OpenRouter (Claude)", fn: callOpenRouter },
-    { name: "Gemini", fn: callGemini },
-    { name: "OpenAI", fn: callOpenAI }
+    { name: "Groq (Llama 3)", fn: callGroq },      // 1. الأسرع والأرخص
+    { name: "Gemini 2.0", fn: callGemini },        // 2. الذكي جداً
+    { name: "OpenRouter (Claude)", fn: callOpenRouter }, // 3. العبقري
+    { name: "OpenAI (GPT-4o)", fn: callOpenAI }    // 4. الملاذ الأخير
   ];
 
   for (const model of models) {
     try {
+      console.log(`Trying ${model.name}...`);
       const response = await model.fn(message);
-      if (response && response.length > 10) {
+      if (response && response.length > 5) {
         return { text: response, model: model.name };
       }
     } catch (error) {
-      console.log(`${model.name} failed, trying next...`);
+      console.warn(`${model.name} failed, switching to next...`);
     }
   }
 
-  return { text: "معلش حصل مشكلة، جرب تاني! 🔄", model: "None" };
+  return { text: "معلش يا بطل، كل السيرفرات مشغولة دلوقتي.. جرب كمان دقيقة! 🔄", model: "System Error" };
 };
 
 // ============ Chat Input Component ============
@@ -221,7 +226,7 @@ function App() {
         <button onClick={() => setCurrentPage("chat")} style={{ padding: "16px 36px", background: "linear-gradient(135deg, #8B5CF6, #EC4899)", border: "none", borderRadius: "14px", color: "white", fontSize: "17px", fontWeight: "700", cursor: "pointer", boxShadow: "0 12px 40px rgba(139,92,246,0.5)" }}>ابدأ المذاكرة 🚀</button>
       </nav>
 
-      <main style={{ textAlign: "center", padding: "80px 24px", position: "relative", zIndex: 10 }}>
+      <main style={{ textAlign: "center", padding: "100px 24px", position: "relative", zIndex: 10 }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", padding: "12px 28px", background: "rgba(139,92,246,0.2)", border: "1px solid rgba(139,92,246,0.4)", borderRadius: "50px", marginBottom: "40px" }}>
           <span>🔥</span>
           <span style={{ color: "#DDD6FE", fontSize: "15px", fontWeight: "600" }}>يعمل بـ 4 نماذج ذكاء اصطناعي معاً!</span>
